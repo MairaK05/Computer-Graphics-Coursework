@@ -249,7 +249,7 @@ int main( void )
         }
         
     }
-
+    camera.eye = glm::vec3(5.0f, 0.0f, 10.0f);
     // Render loop
     while (!glfwWindowShouldClose(window))
     {
@@ -274,6 +274,7 @@ int main( void )
         glEnableVertexAttribArray(1);
         glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
 
         camera.target = camera.eye + camera.front;
         camera.calculateMatrices();
