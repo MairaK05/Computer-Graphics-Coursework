@@ -74,10 +74,18 @@ int main( void )
     // End of window creation
     // =========================================================================
     
+    Model statue("../assets/sphere.obj"); //load the statue model
+    statue.addTexture("../assets/statueTexture.png", "diffuse");
+
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
+
+    // Use back face culling
+    glEnable(GL_CULL_FACE);
+
     // Ensure we can capture keyboard inputs
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+
 
     // Define vertices
     const float vertices[] = {
@@ -180,6 +188,8 @@ int main( void )
         24, 25, 26, 27, 28, 29,     // bottom
         30, 31, 32, 33, 34, 35      // top
     };
+
+
     // Create the Vertex Array Object (VAO)
     unsigned int VAO;
     glGenVertexArrays(1, &VAO);
@@ -205,43 +215,38 @@ int main( void )
 
     // Compile shader program
     unsigned int shaderID;
+    unsigned int statueShaderID;
     shaderID = LoadShaders("vertexShader.glsl", "fragmentShader.glsl");
+    statueShaderID = LoadShaders("statueVertexShader.glsl", "statueFragmentShader.glsl");
+
+    glUseProgram(shaderID);
 
     // Load the textures
     unsigned int texture;
     texture = loadTexture("../assets/tileTexture.png");
 
     // Send the texture uniforms to the fragment shader
-    glUseProgram(shaderID);
     unsigned int textureID;
     textureID = glGetUniformLocation(shaderID, "texture");
     glUniform1i(textureID, 0);
 
     // Cube positions
     glm::vec3 positions[] = {
-        glm::vec3(0.0f, -3.0f,  0.0f),
-        glm::vec3(0.0f, -3.0f, -1.0f),
-        glm::vec3(0.0f, -3.0f, -2.0f),
-        glm::vec3(0.0f, -3.0f, -3.0f),
-        glm::vec3(0.0f, -3.0f, -4.0f),
-        glm::vec3(0.0f, -3.0f, -5.0f),
-        glm::vec3(0.0f, -3.0f, -6.0f),
-        glm::vec3(0.0f, -3.0f, -7.0f),
-        glm::vec3(0.0f, -3.0f, -8.0f),
-        glm::vec3(0.0f, -3.0f, -9.0f)
+        glm::vec3(0.0f, -2.0f,  0.0f)
     };
+
 
     // Add cubes to objects vector
     std::vector<Object> objects;
     Object object;
     object.name = "cube";
-    for (unsigned int h = 0; h < 20; h++) {
-        object.position = positions[1];
-        object.position.z = h;
-        for (unsigned int i = 0; i < 15; i++)
+    for (unsigned int x = 0; x < 30; x++) {
+
+        for (unsigned int z = 0; z < 35; z++)
         {
-            //object.position = positions[1];
-            object.position.x = positions[1].x + 5.0f ;
+            object.position = positions[0];
+            object.position.z = positions[0].z + z;
+            object.position.x = positions[0].x + x;
             object.rotation = glm::vec3(1.0f, 1.0f, 1.0f);
             object.scale = glm::vec3(0.5f, 0.5f, 0.5f);
             object.angle = Maths::radians(0.0f);
@@ -249,7 +254,8 @@ int main( void )
         }
         
     }
-    camera.eye = glm::vec3(5.0f, 0.0f, 10.0f);
+
+    camera.eye = glm::vec3(5.0f, 0.0f, 10.0f); // set the camera position
     // Render loop
     while (!glfwWindowShouldClose(window))
     {
@@ -265,6 +271,9 @@ int main( void )
         glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        camera.target = camera.eye + camera.front;
+        camera.calculateMatrices();
+
         // Send the VBO to the GPU
         glEnableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -275,9 +284,10 @@ int main( void )
         glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
+        //Draw cubes -------------------------------------------------------
 
-        camera.target = camera.eye + camera.front;
-        camera.calculateMatrices();
+        glUseProgram(shaderID);
+        glBindVertexArray(VAO);
 
         for (int i = 0; i < static_cast<unsigned int>(objects.size()); i++)
         {
@@ -296,14 +306,34 @@ int main( void )
             // Draw the triangles
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
             glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
+            
         }
 
-        // Draw the triangles
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
+
+        glBindVertexArray(0);
+        //// Draw the triangles
+        //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        //glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
 
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
+
+        //////Activate statue shader ---------------------------------------
+        glUseProgram(statueShaderID);
+
+        //////Model matrix calculation
+        glm::mat4 translate; // = Maths::translate(statueObj.position);
+        glm::mat4 scale; // = Maths::scale(statueObj.scale);
+        glm::mat4 rotate; // = Maths::rotate(statueObj.angle, statueObj.rotation);
+        glm::mat4 model = translate * rotate * scale;
+
+        glm::mat4 MV = camera.view * model;
+        glm::mat4 MVP = camera.projection * MV;
+        glUniformMatrix4fv(glGetUniformLocation(statueShaderID, "MVP"), 1, GL_FALSE, &MVP[0][0]);
+
+        statue.draw(statueShaderID);
+
+        //// ---------------------------------------------------------------
 
         // Swap buffers
         glfwSwapBuffers(window);
@@ -315,6 +345,8 @@ int main( void )
     glDeleteBuffers(1, &EBO);
     glDeleteBuffers(1, &uvBuffer);
     glDeleteProgram(shaderID);
+
+    glDeleteProgram(statueShaderID);
 
     // Close OpenGL window and terminate GLFW
     glfwTerminate();
