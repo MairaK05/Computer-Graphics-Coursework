@@ -289,6 +289,10 @@ int main( void )
         glUseProgram(shaderID);
         glBindVertexArray(VAO);
 
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glUniform1i(glGetUniformLocation(shaderID, "texture"), 0);
+
         for (int i = 0; i < static_cast<unsigned int>(objects.size()); i++)
         {
             // Calculate the model matrix
