@@ -13,7 +13,7 @@
 
 // Function prototypes
 void keyboardInput(GLFWwindow *window);
-
+void mouseInput(GLFWwindow* window);
 
 // Frame timers
 float previousTime = 0.0f;  // time of previous iteration of the loop
@@ -73,20 +73,23 @@ int main( void )
     // -------------------------------------------------------------------------
     // End of window creation
     // =========================================================================
-    
-    Model statue("../assets/sphere.obj"); //load the statue model
-    statue.addTexture("../assets/statueTexture.png", "diffuse");
-
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
 
     // Use back face culling
     glEnable(GL_CULL_FACE);
 
-    // Ensure we can capture keyboard inputs
+    Model statue("../assets/teapot.obj"); //load the statue model
+    statue.addTexture("../assets/statueTexture.png", "diffuse");
+
+
+    // capture keyboard inputs
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
-
+    // Capture mouse inputs
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwPollEvents();
+    glfwSetCursorPos(window, 1024 / 2, 768 / 2);
     // Define vertices
     const float vertices[] = {
         // front
@@ -223,7 +226,7 @@ int main( void )
 
     // Load the textures
     unsigned int texture;
-    texture = loadTexture("../assets/tileTexture.png");
+    texture = loadTexture("../assets/grass.png");
 
     // Send the texture uniforms to the fragment shader
     unsigned int textureID;
@@ -255,12 +258,13 @@ int main( void )
         
     }
 
-    camera.eye = glm::vec3(5.0f, 0.0f, 10.0f); // set the camera position
+    camera.eye = glm::vec3(15.0f, 0.0f, 20.0f); // set the camera position
     // Render loop
     while (!glfwWindowShouldClose(window))
     {
         // Get inputs
         keyboardInput(window);
+        mouseInput(window);
 
         // Update timer
         float time = glfwGetTime();
@@ -268,9 +272,10 @@ int main( void )
         previousTime = time;
         
         // Clear the window
-        glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
+        glClearColor(0.53f, 0.81f, 0.92f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        //calculate view and projection matrices
         camera.target = camera.eye + camera.front;
         camera.calculateMatrices();
 
@@ -315,14 +320,11 @@ int main( void )
 
 
         glBindVertexArray(0);
-        //// Draw the triangles
-        //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        //glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
 
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
 
-        //////Activate statue shader ---------------------------------------
+        //////Activate statue shader ---------------------------------------------------------------------------------
         glUseProgram(statueShaderID);
 
         //////Model matrix calculation
@@ -337,7 +339,7 @@ int main( void )
 
         statue.draw(statueShaderID);
 
-        //// ---------------------------------------------------------------
+        //// ---------------------------------------------------------------------------------------------------------------
 
         // Swap buffers
         glfwSwapBuffers(window);
@@ -374,4 +376,18 @@ void keyboardInput(GLFWwindow* window)
 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.eye += 5.0f * deltaTime * camera.right;
+}
+void mouseInput(GLFWwindow* window)
+{
+    // Get mouse cursor position and reset to centre
+    double xPos, yPos;
+    glfwGetCursorPos(window, &xPos, &yPos);
+    glfwSetCursorPos(window, 1024 / 2, 768 / 2);
+
+    // Update yaw and pitch angles
+    camera.yaw += 0.005f * float(xPos - 1024 / 2);
+    camera.pitch += 0.005f * float(768 / 2 - yPos);
+
+    // Calculate camera vectors from the yaw and pitch angles
+    camera.calculateCameraVectors();
 }
