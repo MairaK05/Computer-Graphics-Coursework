@@ -30,6 +30,10 @@ struct Object //object
     std::string name;
 };
 
+//light source properties
+glm::vec3 lightPosition = glm::vec3(15.0f, 8.0f, 10.0f);
+glm::vec3 lightColour = glm::vec3(1.0f, 1.0f, 0.2f);
+
 int main( void )
 {
     // =========================================================================
@@ -80,7 +84,9 @@ int main( void )
     glEnable(GL_CULL_FACE);
 
     Model statue("../assets/teapot.obj"); //load the statue model
-    statue.addTexture("../assets/statueTexture.png", "diffuse");
+    statue.addTexture("../assets/tileTexture.png", "diffuse");
+
+    Model sphere("../assets/sphere.obj");
 
 
     // capture keyboard inputs
@@ -219,8 +225,10 @@ int main( void )
     // Compile shader program
     unsigned int shaderID;
     unsigned int statueShaderID;
+    unsigned int sunShaderID;
     shaderID = LoadShaders("vertexShader.glsl", "fragmentShader.glsl");
     statueShaderID = LoadShaders("statueVertexShader.glsl", "statueFragmentShader.glsl");
+    sunShaderID = LoadShaders("sunVertexShader.glsl", "sunFragmentShader.glsl");
 
     glUseProgram(shaderID);
 
@@ -257,6 +265,17 @@ int main( void )
         }
         
     }
+
+    //Lighting properties for statue
+    statue.ka = 1.9f;
+    statue.kd = 1.0f;
+    statue.ks = 3.0f;
+    statue.Ns = 20.0f;
+
+    
+    float constant = 1.0f;
+    float linear = 0.1f;
+    float quadratic = 0.02f;
 
     camera.eye = glm::vec3(15.0f, 0.0f, 20.0f); // set the camera position
     // Render loop
@@ -327,6 +346,16 @@ int main( void )
         //////Activate statue shader ---------------------------------------------------------------------------------
         glUseProgram(statueShaderID);
 
+        // Send light source properties to the shader
+        glUniform1f(glGetUniformLocation(statueShaderID, "ka"), statue.ka);
+        glUniform1f(glGetUniformLocation(statueShaderID, "kd"), statue.kd);
+        glUniform3fv(glGetUniformLocation(statueShaderID, "lightColour"), 1, &lightColour[0]);
+        glm::vec3 viewSpaceLightPosition = glm::vec3(camera.view * glm::vec4(lightPosition, 1.0f));
+        glUniform3fv(glGetUniformLocation(statueShaderID, "lightPosition"), 1, &viewSpaceLightPosition[0]);
+        glUniform1f(glGetUniformLocation(statueShaderID, "constant"), constant);
+        glUniform1f(glGetUniformLocation(statueShaderID, "linear"), linear);
+        glUniform1f(glGetUniformLocation(statueShaderID, "quadratic"), quadratic);
+
         //////Model matrix calculation
         glm::mat4 translate; // = Maths::translate(statueObj.position);
         glm::mat4 scale; // = Maths::scale(statueObj.scale);
@@ -335,11 +364,25 @@ int main( void )
 
         glm::mat4 MV = camera.view * model;
         glm::mat4 MVP = camera.projection * MV;
-        glUniformMatrix4fv(glGetUniformLocation(statueShaderID, "MVP"), 1, GL_FALSE, &MVP[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(statueShaderID, "MVP"), 1, GL_FALSE, &MVP[0][0]); //send mvp to shader
+        // Send MV matrix to the vertex shader
+        glUniformMatrix4fv(glGetUniformLocation(statueShaderID, "MV"), 1, GL_FALSE, &MV[0][0]);
 
         statue.draw(statueShaderID);
 
         //// ---------------------------------------------------------------------------------------------------------------
+        //Draw the sun
+        glUseProgram(sunShaderID);
+
+        translate = Maths::translate(lightPosition);
+        scale = Maths::scale(glm::vec3(0.9f));
+        model = translate * scale;
+
+        MVP = camera.projection * camera.view * model;
+        glUniformMatrix4fv(glGetUniformLocation(sunShaderID, "MVP"), 1, GL_FALSE, &MVP[0][0]);
+        glUniform3fv(glGetUniformLocation(sunShaderID, "lightColour"), 1, &lightColour[0]);
+
+        sphere.draw(sunShaderID);
 
         // Swap buffers
         glfwSwapBuffers(window);
@@ -376,6 +419,7 @@ void keyboardInput(GLFWwindow* window)
 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.eye += 5.0f * deltaTime * camera.right;
+    
 }
 void mouseInput(GLFWwindow* window)
 {
