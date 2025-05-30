@@ -72,7 +72,7 @@ void Light::draw(unsigned int shaderID, glm::mat4 view, glm::mat4 projection, Mo
 
         // Calculate model matrix
         glm::mat4 translate = glm::translate(glm::mat4(1.0f), lightSources[i].position);
-        glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
+        glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.8f));
         glm::mat4 model = translate * scale;
 
         // Send the MVP and MV matrices to the vertex shader

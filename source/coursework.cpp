@@ -284,19 +284,19 @@ int main( void )
     terrain.Ns = 20.0f;
 
     Light lightSources;
-    lightSources.addPointLight(glm::vec3(2.0f, 2.0f, 2.0f),         // position
-        glm::vec3(1.0f, 1.0f, 1.0f),         // colour
+    lightSources.addPointLight(glm::vec3(15.0f, 20.0f, 20.0f),         // position
+        glm::vec3(1.0f, 1.0f, 0.0f),         // colour
         1.0f, 0.1f, 0.02f);                  // attenuation
 
-    lightSources.addPointLight(glm::vec3(1.0f, 1.0f, -8.0f),        // position
-        glm::vec3(1.0f, 1.0f, 1.0f),         // colour
+    lightSources.addPointLight(glm::vec3(1.0f, 15.0f, -8.0f),        // position
+        glm::vec3(1.0f, 0.0f, 1.0f),         // colour
         1.0f, 0.1f, 0.02f);                  // attenuation
 
-    lightSources.addSpotLight(glm::vec3(0.0f, 3.0f, 0.0f),          // position
-        glm::vec3(0.0f, -1.0f, 0.0f),         // direction
-        glm::vec3(1.0f, 1.0f, 1.0f),          // colour
+    lightSources.addSpotLight(glm::vec3(0.0f, 10.0f, 0.0f),          // position
+        statuePosition,         // direction
+        glm::vec3(0.0f, 1.0f, 1.0f),          // colour
         1.0f, 0.1f, 0.02f,                    // attenuation
-        std::cos(Maths::radians(45.0f)));     // cos(phi)
+        std::cos(Maths::radians(45.0f)));     // cos(phi)                 
 
     lightSources.addDirectionalLight(glm::vec3(1.0f, -1.0f, 0.0f),  // direction
         glm::vec3(1.0f, 1.0f, 0.0f));  // colour
@@ -305,7 +305,7 @@ int main( void )
     float linear = 0.1f;
     float quadratic = 0.02f;
 
-    camera.eye = glm::vec3(15.0f, 0.0f, 20.0f); // set the camera position
+    camera.eye = glm::vec3(15.0f, 2.0f, 20.0f); // set the camera position
     // Render loop
     while (!glfwWindowShouldClose(window))
     {
@@ -325,56 +325,6 @@ int main( void )
         //calculate view and projection matrices
         camera.target = camera.eye + camera.front;
         camera.calculateMatrices();
-
-        //// Send the VBO to the GPU
-        //glEnableVertexAttribArray(0);
-        //glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        //glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-        //// Send the UV buffer to the GPU
-        //glEnableVertexAttribArray(1);
-        //glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-        //glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-        ////Draw cubes -------------------------------------------------------
-
-        //glUseProgram(shaderID);
-        //glBindVertexArray(VAO);
-
-        //glActiveTexture(GL_TEXTURE0);
-        //glBindTexture(GL_TEXTURE_2D, texture);
-        //glUniform1i(glGetUniformLocation(shaderID, "texture"), 0);
-
-        //lightSources.toShader(shaderID, camera.view);
-
-        //for (int i = 0; i < static_cast<unsigned int>(objects.size()); i++)
-        //{
-
-        //    // Calculate the model matrix
-        //    glm::mat4 translate = Maths::translate(objects[i].position);
-        //    glm::mat4 scale = Maths::scale(objects[i].scale);
-        //    glm::mat4 rotate = Maths::rotate(objects[i].angle, objects[i].rotation);
-        //    glm::mat4 model = translate * rotate * scale;
-
-        //    // Calculate the MVP matrix
-        //    glm::mat4 MVP = camera.projection * camera.view * model;
-
-        //    // Send MVP matrix to the vertex shader
-        //    glUniformMatrix4fv(glGetUniformLocation(shaderID, "MVP"), 1, GL_FALSE, &MVP[0][0]);
-
-        //    // Draw the triangles
-        //    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        //    glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
-        //    
-        //}
-
-        //lightSources.draw(shaderID, camera.view, camera.projection, sphere);
-
-
-        //glBindVertexArray(0);
-
-        //glDisableVertexAttribArray(0);
-        //glDisableVertexAttribArray(1);
 
         //////Activate statue shader ---------------------------------------------------------------------------------
         glUseProgram(statueShaderID);
@@ -463,20 +413,33 @@ void keyboardInput(GLFWwindow* window)
     // Move the camera using WSAD keys
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.eye += 5.0f * deltaTime * camera.front;
+        camera.eye.y = 4.0f;
 
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
         camera.eye -= 5.0f * deltaTime * camera.front;
+        camera.eye.y = 4.0f;
 
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         camera.eye -= 5.0f * deltaTime * camera.right;
 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.eye += 5.0f * deltaTime * camera.right;
-    //Move the teapot using arrow keys
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-        statuePosition += 2.0f * deltaTime * camera.right;
-    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-        statuePosition -= 2.0f * deltaTime * camera.right;
+
+    if (glm::distance(camera.eye, statuePosition) <= 8.0f)
+    {
+        //Move the teapot using arrow keys
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+            statuePosition += 2.0f * deltaTime * camera.right;
+        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+            statuePosition -= 2.0f * deltaTime * camera.right;
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+            statuePosition += 2.0f * deltaTime * camera.front;
+            statuePosition.y = 1.0f;
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+            statuePosition -= 2.0f * deltaTime * camera.front;
+            statuePosition.y = 1.0f;
+    }
+
 
 
 }
