@@ -21,6 +21,8 @@ public:
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec2> uvs;
     std::vector<glm::vec3> normals;
+    std::vector<glm::vec3> tangents;
+    std::vector<glm::vec3> bitangents;
     std::vector<Texture>   textures;
     unsigned int textureID;
     float ka, kd, ks, Ns;
@@ -34,6 +36,9 @@ public:
     // Add textures
     void addTexture(const char *path, const std::string type);
     
+    // Calculate tangents and bitangents
+    void calculateTangents();
+
     // Cleanup
     void deleteBuffers();
     
@@ -44,13 +49,17 @@ private:
     unsigned int vertexBuffer;
     unsigned int uvBuffer;
     unsigned int normalBuffer;
-    
+    unsigned int tangentBuffer;
+    unsigned int bitangentBuffer;
+
     // Load .obj file method
     bool loadObj(const char *path,
                  std::vector<glm::vec3> &inVertices,
                  std::vector<glm::vec2> &inUVs,
                  std::vector<glm::vec3> &inNormals);
+
     
+
     // Setup buffers
     void setupBuffers();
     

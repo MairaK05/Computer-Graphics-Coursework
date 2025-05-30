@@ -34,6 +34,9 @@ struct Object //object
 glm::vec3 lightPosition = glm::vec3(15.0f, 8.0f, 10.0f);
 glm::vec3 lightColour = glm::vec3(1.0f, 1.0f, 0.2f);
 
+//statue properties
+glm::vec3 statuePosition = glm::vec3(15.0f, 1.0f, 10.0f);
+
 int main( void )
 {
     // =========================================================================
@@ -84,10 +87,12 @@ int main( void )
     glEnable(GL_CULL_FACE);
 
     Model statue("../assets/teapot.obj"); //load the statue model
-    statue.addTexture("../assets/tileTexture.png", "diffuse");
+    statue.addTexture("../assets/diamond_normal.png", "normal");
 
     Model sphere("../assets/sphere.obj");
 
+    Model terrain("../assets/plane.obj");
+    terrain.addTexture("../assets/grassSpecularMap.png", "specular");
 
     // capture keyboard inputs
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
@@ -234,7 +239,7 @@ int main( void )
 
     // Load the textures
     unsigned int texture;
-    texture = loadTexture("../assets/grass.png");
+    texture = loadTexture("../assets/grassSpecularMap.png");
 
     // Send the texture uniforms to the fragment shader
     unsigned int textureID;
@@ -251,6 +256,7 @@ int main( void )
     std::vector<Object> objects;
     Object object;
     object.name = "cube";
+
     for (unsigned int x = 0; x < 30; x++) {
 
         for (unsigned int z = 0; z < 35; z++)
@@ -267,11 +273,33 @@ int main( void )
     }
 
     //Lighting properties for statue
-    statue.ka = 1.9f;
-    statue.kd = 1.0f;
-    statue.ks = 3.0f;
+    statue.ka = 0.7f;
+    statue.kd = 0.5f;
+    statue.ks = 1.0f;
     statue.Ns = 20.0f;
 
+    terrain.ka = 0.7f;
+    terrain.kd = 0.5f;
+    terrain.ks = 1.0f;
+    terrain.Ns = 20.0f;
+
+    Light lightSources;
+    lightSources.addPointLight(glm::vec3(2.0f, 2.0f, 2.0f),         // position
+        glm::vec3(1.0f, 1.0f, 1.0f),         // colour
+        1.0f, 0.1f, 0.02f);                  // attenuation
+
+    lightSources.addPointLight(glm::vec3(1.0f, 1.0f, -8.0f),        // position
+        glm::vec3(1.0f, 1.0f, 1.0f),         // colour
+        1.0f, 0.1f, 0.02f);                  // attenuation
+
+    lightSources.addSpotLight(glm::vec3(0.0f, 3.0f, 0.0f),          // position
+        glm::vec3(0.0f, -1.0f, 0.0f),         // direction
+        glm::vec3(1.0f, 1.0f, 1.0f),          // colour
+        1.0f, 0.1f, 0.02f,                    // attenuation
+        std::cos(Maths::radians(45.0f)));     // cos(phi)
+
+    lightSources.addDirectionalLight(glm::vec3(1.0f, -1.0f, 0.0f),  // direction
+        glm::vec3(1.0f, 1.0f, 0.0f));  // colour
     
     float constant = 1.0f;
     float linear = 0.1f;
@@ -298,66 +326,64 @@ int main( void )
         camera.target = camera.eye + camera.front;
         camera.calculateMatrices();
 
-        // Send the VBO to the GPU
-        glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        //// Send the VBO to the GPU
+        //glEnableVertexAttribArray(0);
+        //glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        //glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-        // Send the UV buffer to the GPU
-        glEnableVertexAttribArray(1);
-        glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        //// Send the UV buffer to the GPU
+        //glEnableVertexAttribArray(1);
+        //glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+        //glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-        //Draw cubes -------------------------------------------------------
+        ////Draw cubes -------------------------------------------------------
 
-        glUseProgram(shaderID);
-        glBindVertexArray(VAO);
+        //glUseProgram(shaderID);
+        //glBindVertexArray(VAO);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glUniform1i(glGetUniformLocation(shaderID, "texture"), 0);
+        //glActiveTexture(GL_TEXTURE0);
+        //glBindTexture(GL_TEXTURE_2D, texture);
+        //glUniform1i(glGetUniformLocation(shaderID, "texture"), 0);
 
-        for (int i = 0; i < static_cast<unsigned int>(objects.size()); i++)
-        {
-            // Calculate the model matrix
-            glm::mat4 translate = Maths::translate(objects[i].position);
-            glm::mat4 scale = Maths::scale(objects[i].scale);
-            glm::mat4 rotate = Maths::rotate(objects[i].angle, objects[i].rotation);
-            glm::mat4 model = translate * rotate * scale;
+        //lightSources.toShader(shaderID, camera.view);
 
-            // Calculate the MVP matrix
-            glm::mat4 MVP = camera.projection * camera.view * model;
+        //for (int i = 0; i < static_cast<unsigned int>(objects.size()); i++)
+        //{
 
-            // Send MVP matrix to the vertex shader
-            glUniformMatrix4fv(glGetUniformLocation(shaderID, "MVP"), 1, GL_FALSE, &MVP[0][0]);
+        //    // Calculate the model matrix
+        //    glm::mat4 translate = Maths::translate(objects[i].position);
+        //    glm::mat4 scale = Maths::scale(objects[i].scale);
+        //    glm::mat4 rotate = Maths::rotate(objects[i].angle, objects[i].rotation);
+        //    glm::mat4 model = translate * rotate * scale;
 
-            // Draw the triangles
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-            glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
-            
-        }
+        //    // Calculate the MVP matrix
+        //    glm::mat4 MVP = camera.projection * camera.view * model;
+
+        //    // Send MVP matrix to the vertex shader
+        //    glUniformMatrix4fv(glGetUniformLocation(shaderID, "MVP"), 1, GL_FALSE, &MVP[0][0]);
+
+        //    // Draw the triangles
+        //    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        //    glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
+        //    
+        //}
+
+        //lightSources.draw(shaderID, camera.view, camera.projection, sphere);
 
 
-        glBindVertexArray(0);
+        //glBindVertexArray(0);
 
-        glDisableVertexAttribArray(0);
-        glDisableVertexAttribArray(1);
+        //glDisableVertexAttribArray(0);
+        //glDisableVertexAttribArray(1);
 
         //////Activate statue shader ---------------------------------------------------------------------------------
         glUseProgram(statueShaderID);
 
         // Send light source properties to the shader
-        glUniform1f(glGetUniformLocation(statueShaderID, "ka"), statue.ka);
-        glUniform1f(glGetUniformLocation(statueShaderID, "kd"), statue.kd);
-        glUniform3fv(glGetUniformLocation(statueShaderID, "lightColour"), 1, &lightColour[0]);
-        glm::vec3 viewSpaceLightPosition = glm::vec3(camera.view * glm::vec4(lightPosition, 1.0f));
-        glUniform3fv(glGetUniformLocation(statueShaderID, "lightPosition"), 1, &viewSpaceLightPosition[0]);
-        glUniform1f(glGetUniformLocation(statueShaderID, "constant"), constant);
-        glUniform1f(glGetUniformLocation(statueShaderID, "linear"), linear);
-        glUniform1f(glGetUniformLocation(statueShaderID, "quadratic"), quadratic);
+        lightSources.toShader(statueShaderID, camera.view);
 
         //////Model matrix calculation
-        glm::mat4 translate; // = Maths::translate(statueObj.position);
+        glm::mat4 translate = Maths::translate(statuePosition);
         glm::mat4 scale; // = Maths::scale(statueObj.scale);
         glm::mat4 rotate; // = Maths::rotate(statueObj.angle, statueObj.rotation);
         glm::mat4 model = translate * rotate * scale;
@@ -372,17 +398,44 @@ int main( void )
 
         //// ---------------------------------------------------------------------------------------------------------------
         //Draw the sun
-        glUseProgram(sunShaderID);
+        //glUseProgram(sunShaderID);
 
-        translate = Maths::translate(lightPosition);
-        scale = Maths::scale(glm::vec3(0.9f));
-        model = translate * scale;
+        //translate = Maths::translate(lightPosition);
+        //scale = Maths::scale(glm::vec3(0.9f));
+        //model = translate * scale;
 
-        MVP = camera.projection * camera.view * model;
-        glUniformMatrix4fv(glGetUniformLocation(sunShaderID, "MVP"), 1, GL_FALSE, &MVP[0][0]);
-        glUniform3fv(glGetUniformLocation(sunShaderID, "lightColour"), 1, &lightColour[0]);
+        //MVP = camera.projection * camera.view * model;
+        //glUniformMatrix4fv(glGetUniformLocation(sunShaderID, "MVP"), 1, GL_FALSE, &MVP[0][0]);
+        //glUniform3fv(glGetUniformLocation(sunShaderID, "lightColour"), 1, &lightColour[0]);
 
-        sphere.draw(sunShaderID);
+        //sphere.draw(sunShaderID);
+
+        //Draw the plane -----------------------------------------------
+        
+        glUseProgram(statueShaderID);
+
+        // Send light source properties to the shader
+        lightSources.toShader(statueShaderID, camera.view);
+
+        //////Model matrix calculation
+        translate = Maths::translate(glm::vec3(0.0f, 0.0f, 0.0f));
+        scale = Maths::scale(glm::vec3(5.0f, 0.2f, 5.0f));
+        rotate; // = Maths::rotate(statueObj.angle, statueObj.rotation);
+        model = translate * rotate * scale;
+
+        MV = camera.view * model;
+        MVP = camera.projection * MV;
+        glUniformMatrix4fv(glGetUniformLocation(statueShaderID, "MVP"), 1, GL_FALSE, &MVP[0][0]); //send mvp to shader
+        // Send MV matrix to the vertex shader
+        glUniformMatrix4fv(glGetUniformLocation(statueShaderID, "MV"), 1, GL_FALSE, &MV[0][0]);
+
+        terrain.draw(statueShaderID);
+
+
+        //--------------------------------------------------------------
+
+
+        lightSources.draw(sunShaderID, camera.view, camera.projection, sphere);
 
         // Swap buffers
         glfwSwapBuffers(window);
@@ -419,7 +472,13 @@ void keyboardInput(GLFWwindow* window)
 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.eye += 5.0f * deltaTime * camera.right;
-    
+    //Move the teapot using arrow keys
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+        statuePosition += 2.0f * deltaTime * camera.right;
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        statuePosition -= 2.0f * deltaTime * camera.right;
+
+
 }
 void mouseInput(GLFWwindow* window)
 {

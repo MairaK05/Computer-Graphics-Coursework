@@ -45,7 +45,7 @@ glm::mat4 Maths::rotate(const float& angle, glm::vec3 v)
 glm::mat4 Maths::lookAt(glm::vec3 eye, glm::vec3 target, glm::vec3 worldUp) {
     glm::vec3 front = glm::normalize(target - eye);
     glm::vec3 right = glm::normalize(glm::cross(front, worldUp));
-    glm::vec3 up = glm::cross(right, front);
+    glm::vec3 up = Maths::cross(right, front);
 
     glm::mat4 rotate = glm::mat4(
         right.x, up.x, -front.x, 0.0f,
@@ -76,5 +76,13 @@ glm::mat4 Maths::perspective(float fov, float aspect, float near, float far) {
     );
 
     return projection;
+}
+
+glm::vec3 Maths::cross(const glm::vec3& a, const glm::vec3& b) {
+    glm::vec3 crossProduct;
+    crossProduct.x = (a.y * b.z) - (a.z * b.y);
+    crossProduct.y = (a.z * b.x) - (a.x * b.z);
+    crossProduct.z = (a.x * b.y) - (a.y * b.x);
+    return crossProduct;
 }
 

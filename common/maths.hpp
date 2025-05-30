@@ -16,4 +16,5 @@ public:
     static glm::mat4 rotate(const float& angle, glm::vec3 v);
     static glm::mat4 lookAt(glm::vec3 eye, glm::vec3 target, glm::vec3 worldUp);
     static glm::mat4 perspective(float fov, float aspect, float near, float far);
+    static glm::vec3 cross(const glm::vec3& a, const glm::vec3& b);
 };
